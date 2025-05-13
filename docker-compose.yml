@@ -31,7 +31,6 @@ services:
       - user-network
     env_file:
       - .env
-    # Adicionando o healthcheck para garantir que o PostgreSQL esteja pronto
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "${DB_USER}", "-d", "${DB_NAME}"]
       interval: 10s
