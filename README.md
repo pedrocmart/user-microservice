@@ -191,3 +191,56 @@ RABBITMQ_URL=amqp://guest:guest@user-rabbitmq:5672/
 RABBITMQ_QUEUE_NAME=user_notifications
 RABBITMQ_ENABLE_CONSUMER=false
 ```
+
+--------
+
+### The Task
+To write a small microservice to manage Users. The service should be implemented in Go.
+
+Requirements
+A user must be stored using the following schema:
+
+| Field            | Value                             |
+|------------------|-----------------------------------|
+| ID               | 26ef0140-c436-4838-a271-32652c72f6f2 |
+| First name       | Alice                             |
+| Last name        | Bob                               |
+| Nickname         | AB123                              |
+| Password (hashed)| supersecurepassword               |
+| Email            | alice@bob.com                     |
+| Country          | UK                                |
+| Created at       | 2024-07-15T07:25:55.32Z           |
+| Updated at       | 2024-07-15T07:25:55.32Z           |
+
+The service must allow you to:
+- Add a new User
+- Modify an existing User
+- Remove a User
+- Return a paginated list of Users, allowing for filtering by certain criteria (e.g. all Users with the country "UK")
+
+
+The service must:
+- Provide an HTTP or gRPC API
+- Use a sensible storage mechanism for the Users
+- Have the ability to notify other interested services of changes to User entities
+- Have meaningful logs
+- Be well documented - a good balance between meaningful code documentation and general documentation on your choices in a readme file
+- Have a health check
+The service must NOT:
+- Provide login or authentication functionality
+
+Notes: 
+It is up to you what technologies and patterns you use to implement these features, but you
+will be assessed on these choices and we expect you to be confident in explaining them.
+We encourage the use of local alternatives or stubs (for instance a database containerized
+and linked to your service through docker-compose).
+Some of the considerations we would like you to think about while implementing your
+solution are:
+- How have you structured your application, and what implications does this have on
+future feature requests?
+- How would your solution react in a distributed environment with high throughput
+traffic?
+- How is your code following Go idioms?
+- How would you expand the solution if you would have spent more time on it?
+
+`The feedback was not great 🙃`
