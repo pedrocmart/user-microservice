@@ -66,6 +66,17 @@ func (r *PostgresUserRepository) CheckHealth() error {
 
 // Create adds a new user
 func (r *PostgresUserRepository) Create(ctx context.Context, user *models.User) error {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		r.logger.Error("error starting transaction", zap.Error(err))
+		return errors.Wrap(err, "error starting transaction")
+	}
+	defer func() {
+		if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
+			r.logger.Error("error rolling back transaction", zap.Error(err))
+		}
+	}()
+
 	query := `
 		INSERT INTO users (id, first_name, last_name, nickname, password, email, country, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -88,7 +99,7 @@ func (r *PostgresUserRepository) Create(ctx context.Context, user *models.User) 
 		zap.String("email", user.Email),
 		zap.String("nickname", user.Nickname))
 
-	_, err := r.db.ExecContext(ctx, query,
+	_, err = tx.ExecContext(ctx, query,
 		user.ID,
 		user.FirstName,
 		user.LastName,
@@ -103,6 +114,11 @@ func (r *PostgresUserRepository) Create(ctx context.Context, user *models.User) 
 	if err != nil {
 		r.logger.Error("error creating user", zap.Error(err))
 		return errors.Wrap(err, "error inserting user into database")
+	}
+
+	if err := tx.Commit(); err != nil {
+		r.logger.Error("error committing transaction", zap.Error(err))
+		return errors.Wrap(err, "error committing transaction")
 	}
 
 	return nil
@@ -179,6 +195,16 @@ func (r *PostgresUserRepository) GetByNickname(ctx context.Context, nickname str
 
 // Update updates an existing user
 func (r *PostgresUserRepository) Update(ctx context.Context, user *models.User) error {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		r.logger.Error("error starting transaction", zap.Error(err))
+		return errors.Wrap(err, "error starting transaction")
+	}
+	defer func() {
+		if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
+			r.logger.Error("error rolling back transaction", zap.Error(err))
+		}
+	}()
 	query := `
 		UPDATE users
 		SET first_name = $1, last_name = $2, nickname = $3, email = $4, country = $5, updated_at = $6
@@ -189,7 +215,7 @@ func (r *PostgresUserRepository) Update(ctx context.Context, user *models.User) 
 
 	user.UpdatedAt = time.Now().UTC()
 
-	result, err := r.db.ExecContext(ctx, query,
+	result, err := tx.ExecContext(ctx, query,
 		user.FirstName,
 		user.LastName,
 		user.Nickname,
@@ -201,6 +227,11 @@ func (r *PostgresUserRepository) Update(ctx context.Context, user *models.User) 
 	if err != nil {
 		r.logger.Error("error updating user", zap.Error(err))
 		return errors.Wrap(err, "error updating user in the database")
+	}
+
+	if err := tx.Commit(); err != nil {
+		r.logger.Error("error committing transaction", zap.Error(err))
+		return errors.Wrap(err, "error committing transaction")
 	}
 
 	rowsAffected, err := result.RowsAffected()
@@ -217,6 +248,17 @@ func (r *PostgresUserRepository) Update(ctx context.Context, user *models.User) 
 
 // UpdatePassword updates a user's password
 func (r *PostgresUserRepository) UpdatePassword(ctx context.Context, id, password string) error {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		r.logger.Error("error starting transaction", zap.Error(err))
+		return errors.Wrap(err, "error starting transaction")
+	}
+	defer func() {
+		if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
+			r.logger.Error("error rolling back transaction", zap.Error(err))
+		}
+	}()
+
 	query := `
 		UPDATE users
 		SET password = $1, updated_at = $2
@@ -227,10 +269,15 @@ func (r *PostgresUserRepository) UpdatePassword(ctx context.Context, id, passwor
 
 	now := time.Now().UTC()
 
-	result, err := r.db.ExecContext(ctx, query, password, now, id)
+	result, err := tx.ExecContext(ctx, query, password, now, id)
 	if err != nil {
 		r.logger.Error("error updating password", zap.Error(err))
 		return errors.Wrap(err, "error updating password in the database")
+	}
+
+	if err := tx.Commit(); err != nil {
+		r.logger.Error("error committing transaction", zap.Error(err))
+		return errors.Wrap(err, "error committing transaction")
 	}
 
 	rowsAffected, err := result.RowsAffected()
